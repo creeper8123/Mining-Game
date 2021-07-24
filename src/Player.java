@@ -1,5 +1,3 @@
-import org.w3c.dom.css.RGBColor;
-
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.*;
 import java.awt.*;
@@ -8,6 +6,7 @@ import java.io.IOException;
 public class Player{
     public JLabel texture;
     public Rectangle hitbox;
+
     public final int playerWidth = 32;
     public final int playerHeight = 48;
 
@@ -94,6 +93,7 @@ public class Player{
                     while (!tile.hitbox.intersects(this.hitbox)) {
                         this.hitbox.x += Math.signum(this.xSpeed);
                     }
+                    System.out.println("Hor Collision");
                     this.hitbox.x -= Math.signum(this.xSpeed);
                     this.xSpeed = 0;
                     this.x = hitbox.x;
@@ -127,6 +127,7 @@ public class Player{
                             e.printStackTrace();
                         }
                     }
+                    System.out.println("Ver Collision");
                     this.ySpeed = 0;
                     this.y = hitbox.y;
                 }

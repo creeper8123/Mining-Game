@@ -41,6 +41,9 @@ public class Game{
                 player.updatePlayerPosition(player.x, player.y);
 
                 drawTiles();
+
+                System.out.println(player.xSpeed);
+                /*-----------------------------END OF MAIN GAMEPLAY LOOP------------------------------*/
             }
         }, 0, 4);
     }
@@ -52,7 +55,7 @@ public class Game{
             }
         }
         for(int i = 0; i != 5; i ++){
-            tiles[i][2].regenerateTile(this.frame, i*64, (3)*64, 64, 64);
+            tiles[i][2].regenerateTile(this.frame, i*64, (2)*64, 64, 64);
         }
     }
 
