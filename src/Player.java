@@ -93,7 +93,6 @@ public class Player{
                     while (!tile.hitbox.intersects(this.hitbox)) {
                         this.hitbox.x += Math.signum(this.xSpeed);
                     }
-                    System.out.println("Hor Collision");
                     this.hitbox.x -= Math.signum(this.xSpeed);
                     this.xSpeed = 0;
                     this.x = hitbox.x;
@@ -127,7 +126,6 @@ public class Player{
                             e.printStackTrace();
                         }
                     }
-                    System.out.println("Ver Collision");
                     this.ySpeed = 0;
                     this.y = hitbox.y;
                 }

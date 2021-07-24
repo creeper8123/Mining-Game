@@ -42,7 +42,12 @@ public class Game{
 
                 drawTiles();
 
-                System.out.println(player.xSpeed);
+                if(mouseInput.mouseHeld){
+                    player.x = 0.0;
+                    player.xSpeed = 0.0;
+                    player.y = 0.0;
+                    player.ySpeed = 0.0;
+                }
                 /*-----------------------------END OF MAIN GAMEPLAY LOOP------------------------------*/
             }
         }, 0, 4);
