@@ -2,6 +2,8 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.util.Objects;
+import java.net.URL;
 
 public class Player{
     public JLabel texture;
@@ -35,8 +37,9 @@ public class Player{
         this.x = initialX;
         this.y = initialY;
         this.texture = new JLabel();
-        this.texture.setBounds(0, 0, this.playerWidth, this.playerHeight);
-        this.texture.setBackground(new Color(0, 0, 255, 255));
+        this.texture.setBounds(0, 0,this.playerWidth, this.playerHeight);
+        this.texture.setIcon(new ImageIcon("resources/" + "textures/missingTexture.png"));
+        this.texture.setForeground(new Color(0, 0, 255, 255));
         this.texture.setOpaque(true);
         this.hitbox = new Rectangle();
         this.hitbox.setBounds((int) this.x, (int) this.y, this.playerWidth, this.playerHeight);
@@ -88,7 +91,7 @@ public class Player{
         hitbox.x += xSpeed;
         for (Tile[] tileRow :Game.tiles) {
             for (Tile tile:tileRow) {
-                if(this.hitbox.intersects(tile.hitbox)) {
+                if(this.hitbox.intersects(tile.hitbox) && tile.hasCollision) {
                     hitbox.x -= xSpeed;
                     while (!tile.hitbox.intersects(this.hitbox)) {
                         this.hitbox.x += Math.signum(this.xSpeed);
@@ -100,14 +103,11 @@ public class Player{
             }
         }
 
-
-
-
         //Vertical Collision
         hitbox.y += ySpeed;
         for (Tile[] tileRow :Game.tiles) {
             for (Tile tile:tileRow) {
-                if(this.hitbox.intersects(tile.hitbox)) {
+                if(this.hitbox.intersects(tile.hitbox) && tile.hasCollision) {
                     hitbox.y -= ySpeed;
                     while (!tile.hitbox.intersects(this.hitbox)) {
                         this.hitbox.y += Math.signum(this.ySpeed);
@@ -136,7 +136,7 @@ public class Player{
         for (Tile[] tileRow :Game.tiles) {
             boolean broken = false;
             for (Tile tile:tileRow) {
-                if (tile.hitbox.intersects(this.hitbox)) {
+                if (tile.hitbox.intersects(this.hitbox) && tile.hasCollision) {
                     onGround = true;
                     broken = true;
                     break;
@@ -189,7 +189,7 @@ public class Player{
         hitbox.x += xSpeed;
         for (Tile[] tileRow :Game.tiles) {
             for (Tile tile:tileRow) {
-                if(this.hitbox.intersects(tile.hitbox)) {
+                if(this.hitbox.intersects(tile.hitbox) && tile.hasCollision) {
                     hitbox.x -= xSpeed;
                     while (!tile.hitbox.intersects(this.hitbox)) {
                         this.hitbox.x += Math.signum(this.xSpeed);
@@ -204,7 +204,7 @@ public class Player{
         hitbox.y += ySpeed;
         for (Tile[] tileRow :Game.tiles) {
             for (Tile tile:tileRow) {
-                if (this.hitbox.intersects(tile.hitbox)) {
+                if (this.hitbox.intersects(tile.hitbox) && tile.hasCollision) {
                     hitbox.y -= ySpeed;
                     while (!tile.hitbox.intersects(this.hitbox)) {
                         this.hitbox.y += Math.signum(this.ySpeed);

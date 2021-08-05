@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class Tile {
     int x;
@@ -12,30 +13,42 @@ public class Tile {
     int tileHeight;
 
     Rectangle hitbox;
-    JLabel texture;
 
-    public Tile(JFrame frame, int x, int y, int tileWidth, int tileHeight){
+    public JLabel texture;
+
+    boolean hasCollision;
+
+
+    public Tile(JFrame frame, int x, int y, int tileWidth, int tileHeight, String textureIcon){
         this.x = x;
         this.y = y;
+
         this.tileWidth = tileWidth;
         this.tileHeight = tileHeight;
+        this.hasCollision = true;
 
-        this.hitbox = new Rectangle(x, y, tileWidth, tileHeight);
+        this.hitbox = new Rectangle(this.x, this.y, tileWidth, tileHeight);
+
         this.texture = new JLabel();
-        this.texture.setBounds(0, 0, this.tileWidth, this.tileHeight);
-        this.texture.setBackground(Color.GREEN);
+        this.texture.setBounds(this.x, this.y, this.tileWidth, this.tileHeight);
+        this.texture.setIcon(GameInfo.getImage(textureIcon));
         this.texture.setOpaque(true);
+
         frame.getContentPane().add(this.texture);
     }
 
     public void regenerateTile(JFrame frame, int x, int y, int tileWidth, int tileHeight){
         this.x = x;
         this.y = y;
+
         this.tileWidth = tileWidth;
         this.tileHeight = tileHeight;
+        this.hasCollision = true;
 
-        this.hitbox = new Rectangle(x, y, tileWidth, tileHeight);
-        this.texture.setBounds(0, 0, this.tileWidth, this.tileHeight);
+        this.hitbox = new Rectangle(this.x, this.y, tileWidth, tileHeight);
+
+        this.texture = new JLabel();
+        this.texture.setBounds(this.x, this.y, this.tileWidth, this.tileHeight);
         this.texture.setBackground(Color.GREEN);
         this.texture.setOpaque(true);
     }

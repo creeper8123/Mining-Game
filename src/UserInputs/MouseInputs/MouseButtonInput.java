@@ -1,14 +1,14 @@
-package UserInputs;
+package UserInputs.MouseInputs;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-public class MouseInput implements MouseListener {
+public class MouseButtonInput implements MouseListener{
 
     public boolean mouseHeld = false;
 
-    public MouseInput(JFrame frame){
+    public MouseButtonInput(JFrame frame){
         frame.addMouseListener(this);
     }
 
