@@ -1,58 +1,62 @@
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.net.URL;
+import java.awt.Image;
 import java.util.Objects;
 
 public class GameInfo {
-    public static class GraphicsInfo{
-        public static final int BACKGROUND_LAYER = 0;
-        public static final int TILE_LAYER = 1;
-        public static final int SPRITE_LAYER = 2;
-        public static final int LIGHTING_LAYER = 3;
 
-        public static class TileInfo{
-            public static final int BACKGROUND_LAYER = 0;
-            public static final int DIMMER_LAYER = 1;
-            public static final int FOREGROUND_LAYER = 2;
-        }
-    }
+    public static final int UPDATE_RATE_IN_MILLIS = 4;
+    public static final int TILE_LAYER = 0;
+    public static final int SPRITE_LAYER = 1;
 
-    public static BufferedImage mergeImages(int width, int height, BufferedImage[] imagesList){
-        BufferedImage finalImage = new BufferedImage(width, height,6);
+    public static class ImageProcessing{
 
-        double r = 0;
-        double g = 0;
-        double b = 0;
-        double a = 0;
-
-        for (int x = 0; x < finalImage.getWidth(); x++) {
-            for (int y = 0; y < finalImage.getHeight(); y++) {
-                for (BufferedImage bufferedImage : imagesList) {
-                    Color pixelColor = new Color(bufferedImage.getRGB(x, y));
-                    r += pixelColor.getRed()/imagesList.length;
-                    g += pixelColor.getGreen()/imagesList.length;
-                    b += pixelColor.getBlue()/imagesList.length;
-                    a += pixelColor.getAlpha()/imagesList.length;
+        public static Image getImage(String location, boolean randomOrientation){
+            try{
+                if(randomOrientation){
+                    return resizeImage(4, rotateImageRandomly(new ImageIcon(Objects.requireNonNull(GameInfo.class.getClassLoader().getResource(location))).getImage()));
                 }
-                int intR = (int) r;
-                int intG = (int) g;
-                int intB = (int) b;
-                int intA = (int) a;
-
-                int finalColour = ((intA&0x0ff)<<24)|((intR&0x0ff)<<16)|((intG&0x0ff)<<8)|(intB&0x0ff);
-                finalImage.setRGB(x, y, finalColour);
+                return resizeImage(4, new ImageIcon(Objects.requireNonNull(GameInfo.class.getClassLoader().getResource(location))).getImage());
+            }catch(NullPointerException e){
+                System.out.println("Warning! Texture file not found! Defaulting to missing texture!");
+                return new ImageIcon(Objects.requireNonNull(GameInfo.class.getClassLoader().getResource("textures/missingTexture.png"))).getImage();
             }
         }
 
-        return finalImage;
-    }
+        public static Image resizeImage(int rescaleFactor, Image inputImage){
+            /*
+            BufferedImage oldImage = new BufferedImage(inputImage.getWidth(null), inputImage.getHeight(null), 6);
+            Graphics2D g2d = oldImage.createGraphics();
+            g2d.drawImage(inputImage, 0, 0, null);
+            g2d.dispose();
+             */
+            return new ImageIcon(inputImage.getScaledInstance(inputImage.getWidth(null)*rescaleFactor, inputImage.getHeight(null)*rescaleFactor, Image.SCALE_DEFAULT)).getImage(); //Has to be done like this, otherwise the width and height are -1
+        }
 
-    public static ImageIcon getImage(String location){
-        URL texture = ImageIO.class.getResource(location);
-        assert texture != null;
-        return new ImageIcon(Objects.requireNonNull(GameInfo.class.getClassLoader().getResource(location)));
+        public static Image rotateImageRandomly(Image inputImage){
+            BufferedImage oldImage = new BufferedImage(inputImage.getWidth(null), inputImage.getHeight(null), 6);
+            Graphics2D g2d = oldImage.createGraphics();
+            g2d.drawImage(inputImage, 0, 0, null);
+            g2d.dispose();
+
+            //From here down is copied code. Source is https://blog.idrsolutions.com/2019/05/image-rotation-in-java/
+            final double rads = Math.toRadians(Math.floor(Math.random()*3)*90);
+            final double sin = Math.abs(Math.sin(rads));
+            final double cos = Math.abs(Math.cos(rads));
+            final int w = (int) Math.floor(oldImage.getWidth() * cos + oldImage.getHeight() * sin);
+            final int h = (int) Math.floor(oldImage.getHeight() * cos + oldImage.getWidth() * sin);
+            final BufferedImage rotatedImage = new BufferedImage(w, h, oldImage.getType());
+            final AffineTransform at = new AffineTransform();
+            at.translate(w / 2, h / 2);
+            at.rotate(rads,0, 0);
+            at.translate(-oldImage.getWidth() / 2, -oldImage.getHeight() / 2);
+            final AffineTransformOp rotateOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+            rotateOp.filter(oldImage,rotatedImage);
+
+            return rotatedImage;
+        }
     }
 }

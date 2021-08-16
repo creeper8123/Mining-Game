@@ -1,13 +1,18 @@
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.IOException;
-import java.util.Objects;
-import java.net.URL;
 
-public class Player{
+public class Player implements KeyListener{
     public JLabel texture;
     public Rectangle hitbox;
+
+    public boolean jump = false;
+    public boolean moveLeft = false;
+    public boolean crouch = false;
+    public boolean moveRight = false;
 
     public final int playerWidth = 32;
     public final int playerHeight = 48;
@@ -21,11 +26,14 @@ public class Player{
     public double xSpeed = 0.0;
     public double ySpeed = 0.0;
     public double xSpeedTarget = 0.0;
+
+    //TODO: Make all sprite values controllable at same rate at different framerates as defined in GameInfo.UPDATE_RATE_IN_MILLIS
+
     public final double xSpeedMax = 2.0;
     public final double xSpeedDeadZone = 0.1;
     public final double xSpeedAcceleration = 0.02;
 
-    public final double airborneManeuverabilityMultiplier = (double) 1/3;
+    public final double airborneManeuverabilityMultiplier = 0.25;
 
     public final double gravity = 0.05;
     public final double terminalVelocity = 10;
@@ -33,7 +41,8 @@ public class Player{
 
     public boolean onGround = false;
 
-    Player(JFrame frame, double initialX, double initialY){
+    Player(JFrame frame, JLayeredPane pane, double initialX, double initialY){
+        frame.addKeyListener(this);
         this.x = initialX;
         this.y = initialY;
         this.texture = new JLabel();
@@ -43,10 +52,11 @@ public class Player{
         this.texture.setOpaque(true);
         this.hitbox = new Rectangle();
         this.hitbox.setBounds((int) this.x, (int) this.y, this.playerWidth, this.playerHeight);
-        frame.getContentPane().add(this.texture);
+        pane.add(this.texture);
+        pane.setLayer(this.texture, GameInfo.SPRITE_LAYER);
     }
 
-    public void calculateNewPosition(boolean jump, boolean moveLeft, boolean moveRight, boolean crouch){
+    public void calculateNewPosition(){
         if((moveLeft && !moveRight) || (!moveLeft && moveRight)){
             if(moveLeft){
                 this.xSpeedTarget = -this.xSpeedMax;
@@ -60,7 +70,6 @@ public class Player{
                 this.xSpeedTarget = this.xSpeed;
             }
         }
-
         if((Math.abs(this.xSpeed - this.xSpeedTarget) < this.xSpeedDeadZone) && (!moveLeft || !moveRight)){
             this.xSpeed = this.xSpeedTarget;
         }else if(this.xSpeed > this.xSpeedTarget){
@@ -89,11 +98,11 @@ public class Player{
 
         //Horizontal Collision
         hitbox.x += xSpeed;
-        for (Tile[] tileRow :Game.tiles) {
-            for (Tile tile:tileRow) {
-                if(this.hitbox.intersects(tile.hitbox) && tile.hasCollision) {
+        for (Tile.TileGraphics[] tileGraphicsRow :Game.tileGraphics) {
+            for (Tile.TileGraphics tileGraphics : tileGraphicsRow) {
+                if(this.hitbox.intersects(tileGraphics.hitbox) && tileGraphics.hasCollision) {
                     hitbox.x -= xSpeed;
-                    while (!tile.hitbox.intersects(this.hitbox)) {
+                    while (!tileGraphics.hitbox.intersects(this.hitbox)) {
                         this.hitbox.x += Math.signum(this.xSpeed);
                     }
                     this.hitbox.x -= Math.signum(this.xSpeed);
@@ -105,11 +114,11 @@ public class Player{
 
         //Vertical Collision
         hitbox.y += ySpeed;
-        for (Tile[] tileRow :Game.tiles) {
-            for (Tile tile:tileRow) {
-                if(this.hitbox.intersects(tile.hitbox) && tile.hasCollision) {
+        for (Tile.TileGraphics[] tileGraphicsRow :Game.tileGraphics) {
+            for (Tile.TileGraphics tileGraphics : tileGraphicsRow) {
+                if(this.hitbox.intersects(tileGraphics.hitbox) && tileGraphics.hasCollision) {
                     hitbox.y -= ySpeed;
-                    while (!tile.hitbox.intersects(this.hitbox)) {
+                    while (!tileGraphics.hitbox.intersects(this.hitbox)) {
                         this.hitbox.y += Math.signum(this.ySpeed);
                     }
                     this.hitbox.y -= Math.signum(this.ySpeed);
@@ -133,10 +142,10 @@ public class Player{
         }
 
         hitbox.y++;
-        for (Tile[] tileRow :Game.tiles) {
+        for (Tile.TileGraphics[] tileGraphicsRow :Game.tileGraphics) {
             boolean broken = false;
-            for (Tile tile:tileRow) {
-                if (tile.hitbox.intersects(this.hitbox) && tile.hasCollision) {
+            for (Tile.TileGraphics tileGraphics : tileGraphicsRow) {
+                if (tileGraphics.hitbox.intersects(this.hitbox) && tileGraphics.hasCollision) {
                     onGround = true;
                     broken = true;
                     break;
@@ -164,7 +173,7 @@ public class Player{
         this.x += this.xSpeed;
     }
 
-    public void calculateNewPositionFly(boolean jump, boolean moveLeft, boolean moveRight, boolean crouch){
+    public void calculateNewPositionFly(){
 
         if((!moveLeft && moveRight) || (moveLeft && !moveRight)){
             if(moveLeft){
@@ -187,11 +196,11 @@ public class Player{
         }
 
         hitbox.x += xSpeed;
-        for (Tile[] tileRow :Game.tiles) {
-            for (Tile tile:tileRow) {
-                if(this.hitbox.intersects(tile.hitbox) && tile.hasCollision) {
+        for (Tile.TileGraphics[] tileGraphicsRow :Game.tileGraphics) {
+            for (Tile.TileGraphics tileGraphics : tileGraphicsRow) {
+                if(this.hitbox.intersects(tileGraphics.hitbox) && tileGraphics.hasCollision) {
                     hitbox.x -= xSpeed;
-                    while (!tile.hitbox.intersects(this.hitbox)) {
+                    while (!tileGraphics.hitbox.intersects(this.hitbox)) {
                         this.hitbox.x += Math.signum(this.xSpeed);
                     }
                     this.hitbox.x -= Math.signum(this.xSpeed);
@@ -202,11 +211,11 @@ public class Player{
         }
 
         hitbox.y += ySpeed;
-        for (Tile[] tileRow :Game.tiles) {
-            for (Tile tile:tileRow) {
-                if (this.hitbox.intersects(tile.hitbox) && tile.hasCollision) {
+        for (Tile.TileGraphics[] tileGraphicsRow :Game.tileGraphics) {
+            for (Tile.TileGraphics tileGraphics : tileGraphicsRow) {
+                if (this.hitbox.intersects(tileGraphics.hitbox) && tileGraphics.hasCollision) {
                     hitbox.y -= ySpeed;
-                    while (!tile.hitbox.intersects(this.hitbox)) {
+                    while (!tileGraphics.hitbox.intersects(this.hitbox)) {
                         this.hitbox.y += Math.signum(this.ySpeed);
                     }
                     this.hitbox.y -= Math.signum(this.ySpeed);
@@ -223,5 +232,30 @@ public class Player{
     public void updatePlayerPosition(double x, double y){
         this.hitbox.setLocation((int) x, (int) y);
         this.texture.setLocation(((int) x)+this.textureXOffset, ((int) y)+this.textureYOffset);
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        switch (e.getKeyChar()) {
+            case 'w', ' ' -> jump = true;
+            case 'a' -> moveLeft = true;
+            case 's' -> crouch = true;
+            case 'd' -> moveRight = true;
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        switch (e.getKeyChar()) {
+            case 'w', ' ' -> jump = false;
+            case 'a' -> moveLeft = false;
+            case 's' -> crouch = false;
+            case 'd' -> moveRight = false;
+        }
     }
 }

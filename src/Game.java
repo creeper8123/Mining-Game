@@ -1,6 +1,3 @@
-import UserInputs.MouseInputs.MouseButtonInput;
-import UserInputs.MouseInputs.MouseScrollInput;
-
 import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.*;
 import java.awt.*;
@@ -11,8 +8,10 @@ import java.util.TimerTask;
 public class Game{
 
     public Player player;
-    JFrame frame = new JFrame();
-    public static Tile[][] tiles = new Tile[10][5];
+    public JFrame frame = new JFrame();
+    public JLayeredPane pane = new JLayeredPane();
+    public static Tile.TileGraphics[][] tileGraphics = new Tile.TileGraphics[31][15];
+    public GradientNoise.Perlin1D worldHeight = new GradientNoise.Perlin1D(4, -2277269595561219194L, false);
 
     Timer mainGameLoop;
 
@@ -22,19 +21,25 @@ public class Game{
     Game() throws UnsupportedAudioFileException, IOException {
         musicManager.playSound("audio/initializer.wav");
         sfxManager.playSound("audio/initializer.wav");
-        frame.setTitle("B O X   2");
+        frame.setTitle("BOX 2");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocation(0, 0);
         frame.setSize(Toolkit.getDefaultToolkit().getScreenSize());
         frame.setLayout(null);
+
+        frame.getContentPane().add(pane);
+        pane.setLocation(0, 0);
+        pane.setSize(Toolkit.getDefaultToolkit().getScreenSize());
+        pane.setLayout(null);
+        pane.setVisible(true);
+
         frame.setVisible(true);
 
         generateTiles();
 
-        player = new Player(frame, 0, 0);
+        player = new Player(frame, pane, 0, 0);
+        //frame.addKeyListener(player);
 
-        UserInputs.KeyInput keyInput = new UserInputs.KeyInput(frame);
-        MouseButtonInput mouseButtonInput = new MouseButtonInput(frame);
         //MouseScrollInput mouseScrollInput = new MouseScrollInput(frame);
 
         //Do this so that the JLayeredPanes show up properly, instead of being invisible
@@ -42,40 +47,68 @@ public class Game{
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         drawTiles();
         frame.setExtendedState(JFrame.NORMAL);
+        System.out.println(" ");
+        System.out.print("Seed: " + worldHeight.seed);
+        System.out.print("L");
+        System.out.println(" ");
 
         mainGameLoop = new Timer();
         mainGameLoop.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 /*--------------------------------MAIN GAMEPLAY LOOP----------------------------------*/
-                player.calculateNewPosition(keyInput.upPressed, keyInput.leftPressed, keyInput.rightPressed, keyInput.downPressed);
+                player.calculateNewPosition();
                 player.updatePlayerPosition(player.x, player.y);
 
                 drawTiles();
-
-                if(mouseButtonInput.mouseHeld){
-                    player.x = 0.0;
-                    player.xSpeed = 0.0;
-                    player.y = 0.0;
-                    player.ySpeed = 0.0;
-                }
                 /*-----------------------------END OF MAIN GAMEPLAY LOOP------------------------------*/
             }
-        }, 0, 4);
+        }, 0, GameInfo.UPDATE_RATE_IN_MILLIS);
     }
 
     public void generateTiles() {
-        for (int i = 0; i != tiles.length; i ++){
-            for (int j = 0;j != tiles[i].length; j ++){
-                tiles[i][j] = new Tile(this.frame, i*64, (j+6)*64, 64, 64, "textures/missingTexture.png");
+        for (int i = 0; i != tileGraphics.length; i ++){
+            for (int j = 0; j != tileGraphics[i].length; j ++){
+                tileGraphics[i][j] = new Tile.TileGraphics(this.pane, i*64, (j)*64, 64, 64, null);
+                tileGraphics[i][j].hasCollision = false;
+            }
+        }
+        System.out.println("--- Y VALUES ---");
+        for (int i = 0; i < tileGraphics.length; i++) {
+            int y = (int) Math.ceil(worldHeight.CosInterpolation((double) i/10) * 8);
+            tileGraphics[i][y].hasCollision = true;
+            tileGraphics[i][y].regenerateTile(this.pane, i*64, (y)*64, 64, 64, "textures/tiles/dirt.png");
+            if(i < 10){
+                System.out.print("0");
+            }
+            System.out.println(i + ": " + y + " -- " + (worldHeight.CosInterpolation((double) i/10) * 8));
+        }
+
+        for (int i = 0; i != tileGraphics.length; i ++){
+            boolean tileFound = false;
+            for (int j = 0; j != tileGraphics[i].length; j ++) {
+                if(tileFound){
+                    tileGraphics[i][j].hasCollision = true;
+                    if(Math.random()>0.9){
+                        if(Math.random() >= 0.5){
+                            tileGraphics[i][j].regenerateTile(this.pane, i*64, (j)*64, 64, 64, "textures/tiles/coal_ore.png");
+                        }else{
+                            tileGraphics[i][j].regenerateTile(this.pane, i*64, (j)*64, 64, 64, "textures/tiles/iron_ore.png");
+                        }
+                    }else{
+                        tileGraphics[i][j].regenerateTile(this.pane, i*64, (j)*64, 64, 64, "textures/tiles/stone.png");
+                    }
+                }else if(tileGraphics[i][j].hasCollision){
+                    tileFound = true;
+                }
             }
         }
     }
 
     public void drawTiles(){
-        for (Tile[] tileRow :tiles) {
-            for (Tile tile:tileRow) {
-                tile.updateTilePosition(tile.x, tile.y);
+        for (Tile.TileGraphics[] tileGraphicsRow : tileGraphics) {
+            for (Tile.TileGraphics tileGraphics : tileGraphicsRow) {
+                tileGraphics.updateTilePosition(tileGraphics.x, tileGraphics.y);
             }
         }
     }
