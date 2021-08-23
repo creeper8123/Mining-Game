@@ -27,14 +27,14 @@ public class GradientNoise {
 
         }
 
-        public double LinInterpolation(double index){
+        public double linInterpolation(double index){
             double low = values[(int) Math.floor(index)];
             double high = values[(int) Math.ceil(index)];
             index = index % 1;
             return low * (1 - index) + high * index;
         }
 
-        public double CosInterpolation(double index){
+        public double cosInterpolation(double index){
             double low = values[(int) Math.floor(index)];
             double high = values[(int) Math.ceil(index)];
             index = index % 1;
