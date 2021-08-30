@@ -41,7 +41,7 @@ public class Player implements KeyListener{
 
     public boolean onGround = false; //Is the player currently touching the ground
 
-    //TODO: Make all sprite values controllable at same rate at different framerates as defined in GameInfo.UPDATE_RATE_IN_MILLIS
+    //TODO: Make all sprite values controllable at same rate at a different framerate as defined in GameInfo.UPDATE_RATE_IN_MILLIS
 
     //Defined all the player variables and adds them to the main frame
     Player(JFrame frame, JLayeredPane pane, double initialX, double initialY){
@@ -55,7 +55,7 @@ public class Player implements KeyListener{
         //Creates the texture object, and sets the texture to an image
         this.texture = new JLabel();
         this.texture.setBounds(0, 0,this.playerWidth, this.playerHeight);
-        this.texture.setIcon(new ImageIcon("resources/" + "textures/missingTexture.png"));
+        this.texture.setIcon(new ImageIcon(GameInfo.ImageProcessing.getImage("textures/missingTexture.png", false, false)));
         this.texture.setOpaque(true);
 
         //Creates the hitbox object
@@ -195,39 +195,41 @@ public class Player implements KeyListener{
         this.x += this.xSpeed;
     }
 
+    //Disables all gravity, and allows for near-unrestricted flight
     public void calculateNewPositionFly(){
 
-        if((!moveLeft && moveRight) || (moveLeft && !moveRight)){
+        if(moveLeft ^ moveRight){
             if(moveLeft){
-                this.xSpeed = -this.xSpeedMax;
+                this.xSpeed = -this.xSpeedMax; //If pressing only left, sets the current speed to X-max left
             }else{
-                this.xSpeed = this.xSpeedMax;
+                this.xSpeed = this.xSpeedMax; //If pressing only right, sets the current speed to X-max right
             }
         }else{
-            this.xSpeed = 0;
+            this.xSpeed = 0; //If neither or both keys are pressed, movement is halted.
         }
 
         if((!jump && crouch) || (jump && !crouch)){
             if(jump){
-                this.ySpeed = -this.xSpeedMax;
+                this.ySpeed = -this.xSpeedMax; //If pressing only up, sets the current speed to X-max up
             }else{
-                this.ySpeed = this.xSpeedMax;
+                this.ySpeed = this.xSpeedMax; //If pressing only down, sets the current speed to X-max down
             }
         }else{
-            this.ySpeed = 0;
+            this.ySpeed = 0; //If neither or both keys are pressed, movement is halted.
         }
 
 
         hitbox.x += xSpeed;
         for (Tile.TileGraphics[] tileGraphicsRow :Game.tileGraphics) {
             for (Tile.TileGraphics tileGraphics : tileGraphicsRow) {
-                if(this.hitbox.intersects(tileGraphics.hitbox) && tileGraphics.hasCollision) {
-                    hitbox.x -= xSpeed;
+                if(this.hitbox.intersects(tileGraphics.hitbox) && tileGraphics.hasCollision) {//Checks if the hitbox collides with any other active hitboxes
+                    //If a collision is detected...
+                    hitbox.x -= xSpeed; //Resets the X pos of the hitbox
                     while (!tileGraphics.hitbox.intersects(this.hitbox)) {
-                        this.hitbox.x += Math.signum(this.xSpeed);
+                        this.hitbox.x += Math.signum(this.xSpeed); //Increments the hitbox toward the object it collided with
                     }
-                    this.hitbox.x -= Math.signum(this.xSpeed);
-                    this.xSpeed = 0;
+                    this.hitbox.x -= Math.signum(this.xSpeed); //Moves the player 1 pixel away from a collision
+                    this.xSpeed = 0; //Cancels out all X speed
                     this.x = hitbox.x;
                 }
             }
@@ -236,13 +238,14 @@ public class Player implements KeyListener{
         hitbox.y += ySpeed;
         for (Tile.TileGraphics[] tileGraphicsRow :Game.tileGraphics) {
             for (Tile.TileGraphics tileGraphics : tileGraphicsRow) {
-                if (this.hitbox.intersects(tileGraphics.hitbox) && tileGraphics.hasCollision) {
+                if (this.hitbox.intersects(tileGraphics.hitbox) && tileGraphics.hasCollision) {//Checks if the hitbox collides with any other active hitboxes
+                    //If a collision is detected...
                     hitbox.y -= ySpeed;
                     while (!tileGraphics.hitbox.intersects(this.hitbox)) {
-                        this.hitbox.y += Math.signum(this.ySpeed);
+                        this.hitbox.y += Math.signum(this.ySpeed); //Increments the hitbox toward the object it collided with
                     }
-                    this.hitbox.y -= Math.signum(this.ySpeed);
-                    this.ySpeed = 0;
+                    this.hitbox.y -= Math.signum(this.ySpeed); //Moves the player 1 pixel away from a collision
+                    this.ySpeed = 0; //Cancels out all Y speed
                     this.y = hitbox.y;
                 }
             }
@@ -254,12 +257,25 @@ public class Player implements KeyListener{
     }
 
     public void updatePlayerPosition(double x, double y){
+        //Overwrite the current position values with the provided values
         this.x = x;
         this.y = y;
 
+        //Set the hitbox and the texture to the provided coordinates
         this.hitbox.setLocation((int) x, (int) y);
         this.texture.setLocation(((int) x)+this.textureXOffset, ((int) y)+this.textureYOffset);
-        Game.pane.setLocation(- (int) (x) + ((Game.frame.getWidth() - this.playerWidth)/2) - this.playerWidth/2, - (int) (y) + ((Game.frame.getHeight() - this.playerHeight)/2) - this.playerHeight/2);
+
+        //Calculate the new position for the camera
+        int frameX = - (int) (x) + ((Game.frame.getWidth() - this.playerWidth)/2) - this.playerWidth/2;
+        int frameY = - (int) (y) + ((Game.frame.getHeight() - this.playerHeight)/2) - this.playerHeight/2;
+
+        //Ensure the pane doesn't show out of bounds areas on the X-axis
+        if(frameX > 0){
+            frameX = 0;
+        }else if(frameX < Game.frame.getWidth() - (Game.tileGraphics.length * 64)){
+            frameX = Game.frame.getWidth() - (Game.tileGraphics.length * 64);
+        }
+        Game.pane.setLocation(frameX, frameY); //Update the pane's position
     }
 
     @Override
@@ -270,6 +286,7 @@ public class Player implements KeyListener{
     @Override
     public void keyPressed(KeyEvent e) {
         switch (e.getKeyChar()) {
+            //Enables various controls when the appropriate key is pressed
             case 'w', ' ' -> jump = true;
             case 'a' -> moveLeft = true;
             case 's' -> crouch = true;
@@ -280,6 +297,7 @@ public class Player implements KeyListener{
     @Override
     public void keyReleased(KeyEvent e) {
         switch (e.getKeyChar()) {
+            //Disables various controls when the appropriate key is released
             case 'w', ' ' -> jump = false;
             case 'a' -> moveLeft = false;
             case 's' -> crouch = false;

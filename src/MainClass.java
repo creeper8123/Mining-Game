@@ -3,6 +3,6 @@ import java.io.IOException;
 
 public class MainClass {
     public static void main(String[] args) throws UnsupportedAudioFileException, IOException {
-        new Game();
+        new Game(); //Starts the game
     }
 }
